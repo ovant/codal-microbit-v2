@@ -15,7 +15,7 @@ Note: there is also a BLE Service named MemoryMapService, which is used to commu
 | 74000 | MicroBitStorage  (is where MicroBitStorage puts the things it stores) |
 | 73000 | CODAL scratch page (is used as temporary scratch by MicroBitFlash, MicroBitFileSystem and MicroBitStorage) |
 | 1C000 | Application |
-| 01000 | SoftDevice (S113)|
+| 01000 | SoftDevice (S140)|
 | 00000 | [Master Boot Record](https://infocenter.nordicsemi.com/index.jsp?topic=%2Fsds_s140%2FSDS%2Fs1xx%2Fmbr_bootloader%2Fmbr_bootloader.html) |
 
 
