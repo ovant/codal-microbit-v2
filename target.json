@@ -70,7 +70,7 @@
         },
         {
             "name":"codal-microbit-nrf5sdk",
-            "url":"https://github.com/microbit-foundation/codal-microbit-nrf5sdk",
+            "url":"https://github.com/ovant/codal-microbit-nrf5sdk",
             "branch":"master",
             "type":"git"
         }
