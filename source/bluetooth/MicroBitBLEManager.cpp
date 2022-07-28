@@ -675,6 +675,41 @@ void MicroBitBLEManager::stopAdvertising()
     MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle));
 }
 
+{
+    // Set the default parameters.
+    p_scan_ctx->scan_params.active        = 1;
+#if (NRF_SD_BLE_API_VERSION > 7)
+    p_scan_ctx->scan_params.interval_us   = NRF_BLE_SCAN_SCAN_INTERVAL * UNIT_0_625_MS;
+    p_scan_ctx->scan_params.window_us     = NRF_BLE_SCAN_SCAN_WINDOW * UNIT_0_625_MS;
+#else
+    p_scan_ctx->scan_params.interval      = NRF_BLE_SCAN_SCAN_INTERVAL;
+    p_scan_ctx->scan_params.window        = NRF_BLE_SCAN_SCAN_WINDOW;
+#endif // #if (NRF_SD_BLE_API_VERSION > 7)
+    p_scan_ctx->scan_params.timeout       = NRF_BLE_SCAN_SCAN_DURATION;
+    p_scan_ctx->scan_params.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+    p_scan_ctx->scan_params.scan_phys     = BLE_GAP_PHY_1MBPS;
+}
+
+ble_gap_scan_params_t scan_params = {
+    false,                          //extend
+    false,                          //report incomplete
+    1,                              //active
+    BLE_GAP_SCAN_FP_ACCEPT_ALL,     //filter policy
+    BLE_GAP_PHY_1MBPS,              //scan phys
+    NRF_BLE_SCAN_SCAN_INTERVAL,     //interval
+    NRF_BLE_SCAN_SCAN_WINDOW,       //window
+    NRF_BLE_SCAN_SCAN_DURATION     //timeout
+    //???? channel mask
+};
+
+
+
+void MicroBitBLEManager::startScanning()
+{
+    MICROBIT_DEBUG_DMESG( "startScanning");
+    
+}
+
 
 /**
  * A member function used to restart advertising
@@ -1678,3 +1713,4 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+

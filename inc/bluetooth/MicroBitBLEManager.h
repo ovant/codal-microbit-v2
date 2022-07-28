@@ -160,6 +160,12 @@ class MicroBitBLEManager : public CodalComponent
     void advertise();
 
     /**
+     * When called, the micro:bit will begin scanning.
+     */
+    void startScanning();
+
+
+    /**
      * Determines the number of devices currently bonded with this micro:bit.
      * @return The number of active bonds.
      */
@@ -326,3 +332,4 @@ class MicroBitBLEManager : public CodalComponent
 #endif
 
 #endif
+
