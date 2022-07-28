@@ -497,6 +497,8 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
     setAdvertiseOnDisconnect( true);
 
+    scan_init();
+
 // If we have whitelisting enabled, then prevent only enable advertising of we have any binded devices...
 // This is to further protect kids' privacy. If no-one initiates BLE, then the device is unreachable.
 // If whiltelisting is disabled, then we always advertise.
@@ -1460,9 +1462,10 @@ static void on_whitelist_req(void)
 
 }
 
+
 /**@brief Function to start scanning.
  */
-static void scan_start(void)
+void MicroBitBLEManager:: scan_start(void)
 {
     ret_code_t err_code;
 
