@@ -1509,16 +1509,11 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 static ble_gap_scan_params_t const m_scan_param =
 {
     .active        = 0x01,
-#if (NRF_SD_BLE_API_VERSION > 7)
-    .interval_us   = NRF_BLE_SCAN_SCAN_INTERVAL * UNIT_0_625_MS,
-    .window_us     = NRF_BLE_SCAN_SCAN_WINDOW * UNIT_0_625_MS,
-#else
-    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
-    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
-#endif // (NRF_SD_BLE_API_VERSION > 7)
-    .timeout       = SCAN_DURATION_WITELIST,
     .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
     .scan_phys     = BLE_GAP_PHY_1MBPS,
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+    .timeout       = SCAN_DURATION_WITELIST
 };
 
 /**@brief Function for initialization scanning and setting filters.
@@ -1913,6 +1908,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
