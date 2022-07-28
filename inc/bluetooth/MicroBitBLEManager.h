@@ -203,11 +203,6 @@ class MicroBitBLEManager : public CodalComponent
      */
     bool getConnected();
 
-
-    void scan_init(void);
-
-    void scan_start(void);
-
 #if CONFIG_ENABLED(MICROBIT_BLE_EDDYSTONE_URL)
     /**
       * Set the content of Eddystone URL frames

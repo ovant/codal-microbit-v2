@@ -53,7 +53,6 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_pwr_mgmt.h"
 #include "nrf_power.h"
 #include "nrf_bootloader_info.h"
-#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -133,12 +132,10 @@ MicroBitBLEManager *MicroBitBLEManager::manager = NULL; // Singleton reference t
 static int                  m_power         = MICROBIT_BLE_DEFAULT_TX_POWER;
 static uint8_t              m_adv_handle    = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
-static bool                  m_whitelist_disabled;        /**< True if whitelist has been temporarily disabled. */
 
 static volatile int         m_pending;
 
 NRF_BLE_GATT_DEF( m_gatt);
-NRF_BLE_SCAN_DEF( m_scan); 
 
 
 static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_ascii);
@@ -497,8 +494,6 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
 
     setAdvertiseOnDisconnect( true);
 
-    scan_init();
-
 // If we have whitelisting enabled, then prevent only enable advertising of we have any binded devices...
 // This is to further protect kids' privacy. If no-one initiates BLE, then the device is unreachable.
 // If whiltelisting is disabled, then we always advertise.
@@ -575,8 +570,6 @@ void MicroBitBLEManager::pairingRequested(ManagedString passKey)
 #define MICROBIT_BLE_PAIR_AUTH      2
 #define MICROBIT_BLE_PAIR_UPDATE    3
 #define MICROBIT_BLE_PAIR_CHECK     4
-
-
 
 /**
  * Record pairing progress
@@ -1355,212 +1348,6 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
     }
 }
 
-//TODO: add scans
-
-#define SCAN_DURATION_WITELIST    3000                             /**< Duration of the scanning in units of 10 milliseconds. */
-#define APP_BLE_CONN_CFG_TAG                1                                                       /**< A tag identifying the SoftDevice BLE configuration. */
-#define TARGET_UUID               BLE_UUID_GATT                    /**< Target device name that application is looking for. */
-
-/**@brief Macro to unpack 16bit unsigned UUID from octet stream. */
-#define UUID16_EXTRACT(DST, SRC) \
-    do                           \
-    {                            \
-        (*(DST))   = (SRC)[1];   \
-        (*(DST)) <<= 8;          \
-        (*(DST))  |= (SRC)[0];   \
-    } while (0)
-
-/**@brief Clear bond information from persistent storage.
- */
-static void delete_bonds(void)
-{
-    ret_code_t err_code;
-
-    NRF_LOG_INFO("Erase bonds.");
-    err_code = pm_peers_delete();
-    APP_ERROR_CHECK(err_code);
-}
-
-/**@brief Retrive a list of peer manager peer IDs.
- *
- * @param[inout] p_peers   The buffer where to store the list of peer IDs.
- * @param[inout] p_size    In: The size of the @p p_peers buffer.
- *                         Out: The number of peers copied in the buffer.
- */
-static void peer_list_get(pm_peer_id_t * p_peers, uint32_t * p_size)
-{
-    pm_peer_id_t peer_id;
-    uint32_t     peers_to_copy;
-
-    peers_to_copy = (*p_size < BLE_GAP_WHITELIST_ADDR_MAX_COUNT) ?
-                     *p_size : BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
-
-    peer_id = pm_next_peer_id_get(PM_PEER_ID_INVALID);
-    *p_size = 0;
-
-    while ((peer_id != PM_PEER_ID_INVALID) && (peers_to_copy--))
-    {
-        p_peers[(*p_size)++] = peer_id;
-        peer_id              = pm_next_peer_id_get(peer_id);
-    }
-}
-
-static void whitelist_load()
-{
-    ret_code_t   ret;
-    pm_peer_id_t peers[8];
-    uint32_t     peer_cnt;
-
-    memset(peers, PM_PEER_ID_INVALID, sizeof(peers));
-    peer_cnt = (sizeof(peers) / sizeof(pm_peer_id_t));
-
-    // Load all peers from flash and whitelist them.
-    peer_list_get(peers, &peer_cnt);
-
-    ret = pm_whitelist_set(peers, peer_cnt);
-    APP_ERROR_CHECK(ret);
-
-    // Setup the device identities list.
-    // Some SoftDevices do not support this feature.
-    ret = pm_device_identities_list_set(peers, peer_cnt);
-    if (ret != NRF_ERROR_NOT_SUPPORTED)
-    {
-        APP_ERROR_CHECK(ret);
-    }
-}
-
-static void on_whitelist_req(void)
-{
-    // Whitelist buffers.
-    ble_gap_addr_t whitelist_addrs[8];
-    ble_gap_irk_t  whitelist_irks[8];
-
-    memset(whitelist_addrs, 0x00, sizeof(whitelist_addrs));
-    memset(whitelist_irks, 0x00, sizeof(whitelist_irks));
-
-    uint32_t addr_cnt = (sizeof(whitelist_addrs) / sizeof(ble_gap_addr_t));
-    uint32_t irk_cnt  = (sizeof(whitelist_irks) / sizeof(ble_gap_irk_t));
-
-    // Reload the whitelist and whitelist all peers.
-    whitelist_load();
-
-    ret_code_t err_code;
-
-    // Get the whitelist previously set using pm_whitelist_set().
-    err_code = pm_whitelist_get(whitelist_addrs, &addr_cnt,
-                                whitelist_irks, &irk_cnt);
-
-    if (((addr_cnt == 0) && (irk_cnt == 0)) ||
-        (m_whitelist_disabled))
-    {
-        // Don't use whitelist.
-        err_code = nrf_ble_scan_params_set(&m_scan, NULL);
-        APP_ERROR_CHECK(err_code);
-    }
-
-    NRF_LOG_INFO("Starting scan.");
-
-}
-
-
-/**@brief Function to start scanning.
- */
-void MicroBitBLEManager:: scan_start(void)
-{
-    ret_code_t err_code;
-
-    err_code = nrf_ble_scan_start(&m_scan);
-    APP_ERROR_CHECK(err_code);
-
-}
-
-static void scan_evt_handler(scan_evt_t const * p_scan_evt)
-{
-    ret_code_t err_code;
-    switch(p_scan_evt->scan_evt_id)
-    {
-        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
-        {
-            on_whitelist_req();
-            m_whitelist_disabled = false;
-        } break;
-
-        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
-        {
-            err_code = p_scan_evt->params.connecting_err.err_code;
-            APP_ERROR_CHECK(err_code);
-        } break;
-
-        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
-        {
-            NRF_LOG_INFO("Scan timed out.");
-            scan_start();
-        } break;
-
-        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
-            break;
-        case NRF_BLE_SCAN_EVT_WHITELIST_ADV_REPORT:
-            break;
-
-        default:
-          break;
-    }
-}
-
-
-/**< Scan parameters requested for scanning and connection. */
-static ble_gap_scan_params_t const m_scan_param =
-{
-    .active        = 0x01,
-    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
-    .scan_phys     = BLE_GAP_PHY_1MBPS,
-    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
-    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
-    .timeout       = SCAN_DURATION_WITELIST
-};
-
-/**@brief Function for initialization scanning and setting filters.
- */
-static void scan_init(void)
-{
-    ret_code_t          err_code;
-    nrf_ble_scan_init_t init_scan;
-
-    memset(&init_scan, 0, sizeof(init_scan));
-
-    init_scan.p_scan_param     = &m_scan_param;
-    init_scan.connect_if_match = true;
-    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
-
-    err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
-    APP_ERROR_CHECK(err_code);
-
-    ble_uuid_t uuid =
-    {
-        .uuid = TARGET_UUID,
-        .type = BLE_UUID_TYPE_BLE,
-    };
-
-    err_code = nrf_ble_scan_filter_set(&m_scan,
-                                       SCAN_UUID_FILTER,
-                                       &uuid);
-    APP_ERROR_CHECK(err_code);
-
-
-
-    err_code = nrf_ble_scan_filters_enable(&m_scan,
-                                           NRF_BLE_SCAN_ALL_FILTER,
-                                           false);
-    APP_ERROR_CHECK(err_code);
-
-}
-
-
-void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
-{
-    app_error_handler(0xDEADBEEF, line_num, p_file_name);
-}
-
 
 /**
  * Callback for handling Peer Manager events.
@@ -1626,26 +1413,6 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
         default:
             break;
-    }
-}
-
-/**@brief Function for starting a scan, or instead trigger it from peer manager (after
- *        deleting bonds).
- *
- * @param[in] p_erase_bonds Pointer to a bool to determine if bonds will be deleted before scanning.
- */
-void scanning_start(bool * p_erase_bonds)
-{
-    // Start scanning for peripherals and initiate connection
-    // with devices that advertise GATT Service UUID.
-    if (*p_erase_bonds == true)
-    {
-        // Scan is started by the PM_EVT_PEERS_DELETE_SUCCEEDED event.
-        delete_bonds();
-    }
-    else
-    {
-        scan_start();
     }
 }
 
@@ -1911,9 +1678,3 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
-
-
-
-
-
-
