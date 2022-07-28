@@ -1516,8 +1516,8 @@ static ble_gap_scan_params_t const m_scan_param =
     .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
     .window        = NRF_BLE_SCAN_SCAN_WINDOW,
 #endif // (NRF_SD_BLE_API_VERSION > 7)
-    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
     .timeout       = SCAN_DURATION_WITELIST,
+    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
     .scan_phys     = BLE_GAP_PHY_1MBPS,
 };
 
@@ -1913,6 +1913,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
