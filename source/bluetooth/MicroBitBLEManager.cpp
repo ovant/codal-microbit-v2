@@ -133,6 +133,7 @@ MicroBitBLEManager *MicroBitBLEManager::manager = NULL; // Singleton reference t
 static int                  m_power         = MICROBIT_BLE_DEFAULT_TX_POWER;
 static uint8_t              m_adv_handle    = BLE_GAP_ADV_SET_HANDLE_NOT_SET;
 static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
+static bool                  m_whitelist_disabled;        /**< True if whitelist has been temporarily disabled. */
 
 static volatile int         m_pending;
 
@@ -572,6 +573,8 @@ void MicroBitBLEManager::pairingRequested(ManagedString passKey)
 #define MICROBIT_BLE_PAIR_AUTH      2
 #define MICROBIT_BLE_PAIR_UPDATE    3
 #define MICROBIT_BLE_PAIR_CHECK     4
+
+
 
 /**
  * Record pairing progress
@@ -1352,6 +1355,46 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
 
 //TODO: add scans
 
+#define SCAN_DURATION_WITELIST    3000                             /**< Duration of the scanning in units of 10 milliseconds. */
+#define APP_BLE_CONN_CFG_TAG                1                                                       /**< A tag identifying the SoftDevice BLE configuration. */
+#define TARGET_UUID               BLE_UUID_GATT                    /**< Target device name that application is looking for. */
+
+
+static void on_whitelist_req(void)
+{
+    // Whitelist buffers.
+    ble_gap_addr_t whitelist_addrs[8];
+    ble_gap_irk_t  whitelist_irks[8];
+
+    memset(whitelist_addrs, 0x00, sizeof(whitelist_addrs));
+    memset(whitelist_irks, 0x00, sizeof(whitelist_irks));
+
+    uint32_t addr_cnt = (sizeof(whitelist_addrs) / sizeof(ble_gap_addr_t));
+    uint32_t irk_cnt  = (sizeof(whitelist_irks) / sizeof(ble_gap_irk_t));
+
+    // Reload the whitelist and whitelist all peers.
+    whitelist_load();
+
+    ret_code_t err_code;
+
+    // Get the whitelist previously set using pm_whitelist_set().
+    err_code = pm_whitelist_get(whitelist_addrs, &addr_cnt,
+                                whitelist_irks, &irk_cnt);
+
+    if (((addr_cnt == 0) && (irk_cnt == 0)) ||
+        (m_whitelist_disabled))
+    {
+        // Don't use whitelist.
+        err_code = nrf_ble_scan_params_set(&m_scan, NULL);
+        APP_ERROR_CHECK(err_code);
+    }
+
+    NRF_LOG_INFO("Starting scan.");
+
+    err_code = bsp_indication_set(BSP_INDICATE_SCANNING);
+    APP_ERROR_CHECK(err_code);
+}
+
 static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 {
     ret_code_t err_code;
@@ -1460,7 +1503,18 @@ static void scan_init(void)
 
 }
 
-static void scan_start(void);
+/**@brief Function to start scanning.
+ */
+static void scan_start(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_ble_scan_start(&m_scan);
+    APP_ERROR_CHECK(err_code);
+
+    bsp_board_led_off(CENTRAL_CONNECTED_LED);
+    bsp_board_led_on(CENTRAL_SCANNING_LED);
+}
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
@@ -1817,4 +1871,5 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
