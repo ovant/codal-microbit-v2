@@ -53,6 +53,7 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_pwr_mgmt.h"
 #include "nrf_power.h"
 #include "nrf_bootloader_info.h"
+#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -136,6 +137,7 @@ static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 static volatile int         m_pending;
 
 NRF_BLE_GATT_DEF( m_gatt);
+NRF_BLE_SCAN_DEF( m_scan); 
 
 
 static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_ascii);
@@ -1348,6 +1350,123 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
     }
 }
 
+//TODO: add scans
+
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    ret_code_t err_code;
+    switch(p_scan_evt->scan_evt_id)
+    {
+        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
+        {
+            on_whitelist_req();
+            m_whitelist_disabled = false;
+        } break;
+
+        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
+        {
+            err_code = p_scan_evt->params.connecting_err.err_code;
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+        {
+            NRF_LOG_INFO("Scan timed out.");
+            scan_start();
+        } break;
+
+        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+            break;
+        case NRF_BLE_SCAN_EVT_WHITELIST_ADV_REPORT:
+            break;
+
+        default:
+          break;
+    }
+}
+
+/**@brief Macro to unpack 16bit unsigned UUID from octet stream. */
+#define UUID16_EXTRACT(DST, SRC) \
+    do                           \
+    {                            \
+        (*(DST))   = (SRC)[1];   \
+        (*(DST)) <<= 8;          \
+        (*(DST))  |= (SRC)[0];   \
+    } while (0)
+
+/**< Scan parameters requested for scanning and connection. */
+static ble_gap_scan_params_t const m_scan_param =
+{
+    .active        = 0x01,
+#if (NRF_SD_BLE_API_VERSION > 7)
+    .interval_us   = NRF_BLE_SCAN_SCAN_INTERVAL * UNIT_0_625_MS,
+    .window_us     = NRF_BLE_SCAN_SCAN_WINDOW * UNIT_0_625_MS,
+#else
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+#endif // (NRF_SD_BLE_API_VERSION > 7)
+    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
+    .timeout       = SCAN_DURATION_WITELIST,
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
+};
+
+/**@brief Function for initialization scanning and setting filters.
+ */
+static void scan_init(void)
+{
+    ret_code_t          err_code;
+    nrf_ble_scan_init_t init_scan;
+
+    memset(&init_scan, 0, sizeof(init_scan));
+
+    init_scan.p_scan_param     = &m_scan_param;
+    init_scan.connect_if_match = true;
+    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+
+    err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    APP_ERROR_CHECK(err_code);
+
+    ble_uuid_t uuid =
+    {
+        .uuid = TARGET_UUID,
+        .type = BLE_UUID_TYPE_BLE,
+    };
+
+    err_code = nrf_ble_scan_filter_set(&m_scan,
+                                       SCAN_UUID_FILTER,
+                                       &uuid);
+    APP_ERROR_CHECK(err_code);
+
+    if (strlen(m_target_periph_name) != 0)
+    {
+        err_code = nrf_ble_scan_filter_set(&m_scan,
+                                           SCAN_NAME_FILTER,
+                                           m_target_periph_name);
+        APP_ERROR_CHECK(err_code);
+    }
+
+    if (is_connect_per_addr)
+    {
+       err_code = nrf_ble_scan_filter_set(&m_scan,
+                                          SCAN_ADDR_FILTER,
+                                          m_target_periph_addr.addr);
+       APP_ERROR_CHECK(err_code);
+    }
+
+    err_code = nrf_ble_scan_filters_enable(&m_scan,
+                                           NRF_BLE_SCAN_ALL_FILTER,
+                                           false);
+    APP_ERROR_CHECK(err_code);
+
+}
+
+static void scan_start(void);
+
+void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
+{
+    app_error_handler(0xDEADBEEF, line_num, p_file_name);
+}
+
 
 /**
  * Callback for handling Peer Manager events.
@@ -1413,6 +1532,26 @@ static void microbit_ble_pm_evt_handler(pm_evt_t const * p_evt)
 
         default:
             break;
+    }
+}
+
+/**@brief Function for starting a scan, or instead trigger it from peer manager (after
+ *        deleting bonds).
+ *
+ * @param[in] p_erase_bonds Pointer to a bool to determine if bonds will be deleted before scanning.
+ */
+void scanning_start(bool * p_erase_bonds)
+{
+    // Start scanning for peripherals and initiate connection
+    // with devices that advertise GATT Service UUID.
+    if (*p_erase_bonds == true)
+    {
+        // Scan is started by the PM_EVT_PEERS_DELETE_SUCCEEDED event.
+        delete_bonds();
+    }
+    else
+    {
+        scan_start();
     }
 }
 
@@ -1678,3 +1817,4 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
