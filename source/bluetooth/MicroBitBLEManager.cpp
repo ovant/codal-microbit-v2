@@ -1359,6 +1359,50 @@ static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_conte
 #define APP_BLE_CONN_CFG_TAG                1                                                       /**< A tag identifying the SoftDevice BLE configuration. */
 #define TARGET_UUID               BLE_UUID_GATT                    /**< Target device name that application is looking for. */
 
+/**@brief Macro to unpack 16bit unsigned UUID from octet stream. */
+#define UUID16_EXTRACT(DST, SRC) \
+    do                           \
+    {                            \
+        (*(DST))   = (SRC)[1];   \
+        (*(DST)) <<= 8;          \
+        (*(DST))  |= (SRC)[0];   \
+    } while (0)
+
+/**@brief Clear bond information from persistent storage.
+ */
+static void delete_bonds(void)
+{
+    ret_code_t err_code;
+
+    NRF_LOG_INFO("Erase bonds.");
+    err_code = pm_peers_delete();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+static void whitelist_load()
+{
+    ret_code_t   ret;
+    pm_peer_id_t peers[8];
+    uint32_t     peer_cnt;
+
+    memset(peers, PM_PEER_ID_INVALID, sizeof(peers));
+    peer_cnt = (sizeof(peers) / sizeof(pm_peer_id_t));
+
+    // Load all peers from flash and whitelist them.
+    peer_list_get(peers, &peer_cnt);
+
+    ret = pm_whitelist_set(peers, peer_cnt);
+    APP_ERROR_CHECK(ret);
+
+    // Setup the device identities list.
+    // Some SoftDevices do not support this feature.
+    ret = pm_device_identities_list_set(peers, peer_cnt);
+    if (ret != NRF_ERROR_NOT_SUPPORTED)
+    {
+        APP_ERROR_CHECK(ret);
+    }
+}
 
 static void on_whitelist_req(void)
 {
@@ -1391,8 +1435,17 @@ static void on_whitelist_req(void)
 
     NRF_LOG_INFO("Starting scan.");
 
-    err_code = bsp_indication_set(BSP_INDICATE_SCANNING);
+}
+
+/**@brief Function to start scanning.
+ */
+static void scan_start(void)
+{
+    ret_code_t err_code;
+
+    err_code = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(err_code);
+
 }
 
 static void scan_evt_handler(scan_evt_t const * p_scan_evt)
@@ -1428,14 +1481,6 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
     }
 }
 
-/**@brief Macro to unpack 16bit unsigned UUID from octet stream. */
-#define UUID16_EXTRACT(DST, SRC) \
-    do                           \
-    {                            \
-        (*(DST))   = (SRC)[1];   \
-        (*(DST)) <<= 8;          \
-        (*(DST))  |= (SRC)[0];   \
-    } while (0)
 
 /**< Scan parameters requested for scanning and connection. */
 static ble_gap_scan_params_t const m_scan_param =
@@ -1480,21 +1525,7 @@ static void scan_init(void)
                                        &uuid);
     APP_ERROR_CHECK(err_code);
 
-    if (strlen(m_target_periph_name) != 0)
-    {
-        err_code = nrf_ble_scan_filter_set(&m_scan,
-                                           SCAN_NAME_FILTER,
-                                           m_target_periph_name);
-        APP_ERROR_CHECK(err_code);
-    }
 
-    if (is_connect_per_addr)
-    {
-       err_code = nrf_ble_scan_filter_set(&m_scan,
-                                          SCAN_ADDR_FILTER,
-                                          m_target_periph_addr.addr);
-       APP_ERROR_CHECK(err_code);
-    }
 
     err_code = nrf_ble_scan_filters_enable(&m_scan,
                                            NRF_BLE_SCAN_ALL_FILTER,
@@ -1503,18 +1534,6 @@ static void scan_init(void)
 
 }
 
-/**@brief Function to start scanning.
- */
-static void scan_start(void)
-{
-    ret_code_t err_code;
-
-    err_code = nrf_ble_scan_start(&m_scan);
-    APP_ERROR_CHECK(err_code);
-
-    bsp_board_led_off(CENTRAL_CONNECTED_LED);
-    bsp_board_led_on(CENTRAL_SCANNING_LED);
-}
 
 void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
@@ -1871,5 +1890,6 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
