@@ -71,7 +71,7 @@
         {
             "name":"codal-microbit-nrf5sdk",
             "url":"https://github.com/ovant/codal-microbit-nrf5sdk",
-            "branch":"master",
+            "branch":"scan_testing",
             "type":"git"
         }
     ]
