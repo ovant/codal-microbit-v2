@@ -693,7 +693,8 @@ ble_gap_scan_params_t scan_params = {
 void MicroBitBLEManager::startScanning()
 {
     MICROBIT_DEBUG_DMESG( "startScanning");
-    
+    // MICROBIT_BLE_ECHK( sd_ble_gap_scan_start(scan_params, &p_scan_ctx->scan_buffer)); //todo scan buffer
+    MICROBIT_BLE_ECHK( sd_ble_gap_scan_start(&scan_params,NULL));
 }
 
 
