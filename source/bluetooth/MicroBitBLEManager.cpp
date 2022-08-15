@@ -53,6 +53,7 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_pwr_mgmt.h"
 #include "nrf_power.h"
 #include "nrf_bootloader_info.h"
+#include "nrf_ble_scan.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -136,6 +137,7 @@ static uint8_t              m_enc_advdata[ BLE_GAP_ADV_SET_DATA_SIZE_MAX];
 static volatile int         m_pending;
 
 NRF_BLE_GATT_DEF( m_gatt);
+NRF_BLE_SCAN_DEF( m_scan); 
 
 
 static void const_ascii_to_utf8(ble_srv_utf8_str_t * p_utf8, const char * p_ascii);
