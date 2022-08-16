@@ -677,26 +677,41 @@ void MicroBitBLEManager::stopAdvertising()
     MICROBIT_BLE_ECHK( sd_ble_gap_adv_stop( m_adv_handle));
 }
 
+//SCAN SECTION
 
-ble_gap_scan_params_t scan_params = {
-    false,                          //extend
-    false,                          //report incomplete
-    1,                              //active
-    BLE_GAP_SCAN_FP_ACCEPT_ALL,     //filter policy
-    BLE_GAP_PHY_1MBPS,              //scan phys
-    NRF_BLE_SCAN_SCAN_INTERVAL,     //interval
-    NRF_BLE_SCAN_SCAN_WINDOW,       //window
-    NRF_BLE_SCAN_SCAN_DURATION     //timeout
-    //???? channel mask
-};
+#define APP_BLE_CONN_CFG_TAG            1                                   /**< A tag identifying the SoftDevice BLE configuration. */
 
+bool scan_flag = false;
+
+bool MicroBitBLEManager::getFlag(){
+    bool temp = scan_flag;
+    scan_flag = false;
+    return temp;
+}
+
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    scan_flag = true;
+}
+
+
+static void scan_init(void)
+{
+    nrf_ble_scan_init_t init_scan;
+
+    memset(&init_scan, 0, sizeof(init_scan));
+
+    init_scan.connect_if_match = true;
+    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+
+    nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    
+}
 
 
 void MicroBitBLEManager::startScanning()
 {
-    MICROBIT_DEBUG_DMESG( "startScanning");
-    // MICROBIT_BLE_ECHK( sd_ble_gap_scan_start(scan_params, &p_scan_ctx->scan_buffer)); //todo scan buffer
-    MICROBIT_BLE_ECHK( sd_ble_gap_scan_start(&scan_params,NULL));
+    nrf_ble_scan_start(&m_scan);
 }
 
 
@@ -1702,4 +1717,5 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
