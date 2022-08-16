@@ -161,6 +161,8 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                                                uint8_t *frameData, uint16_t frameSize);
 #endif
 
+static void scan_init();
+
 
 /**
  * Constructor.
@@ -1717,5 +1719,6 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
