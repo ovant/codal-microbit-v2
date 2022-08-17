@@ -40,6 +40,8 @@ DEALINGS IN THE SOFTWARE.
 #include "ExternalEvents.h"
 #include "MicroBitButton.h"
 
+#include "nrf_ble_scan.h"
+
 #define MICROBIT_BLE_PAIR_REQUEST 0x01
 #define MICROBIT_BLE_PAIR_COMPLETE 0x02
 #define MICROBIT_BLE_PAIR_PASSCODE 0x04
@@ -165,6 +167,11 @@ class MicroBitBLEManager : public CodalComponent
     void startScanning();
 
     bool getFlag();
+
+    void setFlag(bool x);
+
+
+    void initializeScan();
 
 
     /**
@@ -334,5 +341,6 @@ class MicroBitBLEManager : public CodalComponent
 #endif
 
 #endif
+
 
 

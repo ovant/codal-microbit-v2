@@ -161,7 +161,7 @@ static void microbit_ble_configureAdvertising( bool connectable, bool discoverab
                                                uint8_t *frameData, uint16_t frameSize);
 #endif
 
-static void scan_init();
+
 
 
 /**
@@ -486,15 +486,15 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     // Configure the radio at our default power level
     setTransmitPower( MICROBIT_BLE_DEFAULT_TX_POWER);
 
-    ble_conn_params_init_t cp_init;
-    memset(&cp_init, 0, sizeof(cp_init));
-    cp_init.p_conn_params                  = &gap_conn_params;
-    cp_init.first_conn_params_update_delay = APP_TIMER_TICKS(5000);     // 5 seconds
-    cp_init.next_conn_params_update_delay  = APP_TIMER_TICKS(30000);    // 30 seconds
-    cp_init.max_conn_params_update_count   = 3;
-    cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-    cp_init.disconnect_on_fail             = false;
-    MICROBIT_BLE_ECHK( ble_conn_params_init(&cp_init));
+    ble_conn_params_init_t cm_scan_param;
+    memset(&cm_scan_param, 0, sizeof(cm_scan_param));
+    cm_scan_param.p_conn_params                  = &gap_conn_params;
+    cm_scan_param.first_conn_params_update_delay = APP_TIMER_TICKS(5000);     // 5 seconds
+    cm_scan_param.next_conn_params_update_delay  = APP_TIMER_TICKS(30000);    // 30 seconds
+    cm_scan_param.max_conn_params_update_count   = 3;
+    cm_scan_param.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
+    cm_scan_param.disconnect_on_fail             = false;
+    MICROBIT_BLE_ECHK( ble_conn_params_init(&cm_scan_param));
 
     setAdvertiseOnDisconnect( true);
 
@@ -505,7 +505,6 @@ void MicroBitBLEManager::init( ManagedString deviceName, ManagedString serialNum
     if ( getBondCount() > 0)
 #endif
         // advertise();
-        scan_init();
     this->status |= DEVICE_COMPONENT_RUNNING;
 }
 
@@ -682,8 +681,44 @@ void MicroBitBLEManager::stopAdvertising()
 //SCAN SECTION
 
 #define APP_BLE_CONN_CFG_TAG            1                                   /**< A tag identifying the SoftDevice BLE configuration. */
-
+#define SCAN_DURATION_WITELIST          3000                                /**< Duration of the scanning in units of 10 milliseconds. */
 bool scan_flag = false;
+
+static void scan_evt_handler(scan_evt_t const * p_scan_evt)
+{
+    // scan_flag = true;
+
+    switch(p_scan_evt->scan_evt_id)
+    {
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+        {
+            // scan_flag = true;
+            nrf_ble_scan_start(&m_scan);
+        } break;
+        default:
+        {
+            scan_flag = true;
+            break;
+        }
+    }
+}
+
+
+
+
+/**< Scan parameters requested for scanning and connection. */
+static ble_gap_scan_params_t const m_scan_param =
+{
+    .active        = 0x01,
+    .filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL,
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+    .timeout       = SCAN_DURATION_WITELIST,
+};
+
+
+
 
 bool MicroBitBLEManager::getFlag(){
     bool temp = scan_flag;
@@ -691,10 +726,15 @@ bool MicroBitBLEManager::getFlag(){
     return temp;
 }
 
-static void scan_evt_handler(scan_evt_t const * p_scan_evt)
-{
-    scan_flag = true;
+
+
+
+void MicroBitBLEManager::setFlag(bool x){
+    scan_flag = x;
 }
+
+
+
 
 
 static void scan_init(void)
@@ -703,16 +743,24 @@ static void scan_init(void)
 
     memset(&init_scan, 0, sizeof(init_scan));
 
+    init_scan.p_scan_param     = &m_scan_param;
     init_scan.connect_if_match = true;
     init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
+
 
     nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
     
 }
 
+void MicroBitBLEManager::initializeScan(){
+    scan_init();
+}
+
+
 
 void MicroBitBLEManager::startScanning()
 {
+
     nrf_ble_scan_start(&m_scan);
 }
 
@@ -1336,7 +1384,8 @@ static void passkeyDisplayCallback( microbit_gaphandle_t handle, ManagedString p
 static void microbit_ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     //MICROBIT_DEBUG_DMESG( "%d:microbit_ble_evt_handler %x %d", (int)system_timer_current_time(), (unsigned int) p_ble_evt->header.evt_id);
-    
+
+
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_DISCONNECTED:
@@ -1719,6 +1768,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
