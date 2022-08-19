@@ -684,20 +684,35 @@ void MicroBitBLEManager::stopAdvertising()
 #define SCAN_DURATION_WITELIST          3000                                /**< Duration of the scanning in units of 10 milliseconds. */
 bool scan_flag = false;
 
+
+
+static void ligh_data_parse(){
+    scan_flag = true;
+    // uint16_t len = p_scan_evt->params.p_not_found->data.len;
+}
+
+
 static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 {
     // scan_flag = true;
 
     switch(p_scan_evt->scan_evt_id)
     {
+        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
+        {
+            nrf_ble_scan_params_set(&m_scan, NULL);
+        } break;
         case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
         {
             // scan_flag = true;
             nrf_ble_scan_start(&m_scan);
         } break;
+        case NRF_BLE_SCAN_EVT_NOT_FOUND:{
+            ligh_data_parse();
+            
+        }
         default:
         {
-            scan_flag = true;
             break;
         }
     }
@@ -744,7 +759,7 @@ static void scan_init(void)
     memset(&init_scan, 0, sizeof(init_scan));
 
     init_scan.p_scan_param     = &m_scan_param;
-    init_scan.connect_if_match = true;
+    init_scan.connect_if_match = false;
     init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
 
 
@@ -1768,6 +1783,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
