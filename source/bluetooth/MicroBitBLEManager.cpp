@@ -683,12 +683,20 @@ void MicroBitBLEManager::stopAdvertising()
 #define APP_BLE_CONN_CFG_TAG            1                                   /**< A tag identifying the SoftDevice BLE configuration. */
 #define SCAN_DURATION_WITELIST          3000                                /**< Duration of the scanning in units of 10 milliseconds. */
 bool scan_flag = false;
-
+uint8_t hits = 0;
 
 
 static void ligh_data_parse(){
-    scan_flag = true;
-    // uint16_t len = p_scan_evt->params.p_not_found->data.len;
+    //check lightricity company id
+    if(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A)
+        scan_flag = true;
+
+    
+
+    hits++;
+    // for(uint8_t i=0;i<=31;i++){
+    //     uint8_t d = m_scan.scan_buffer_data[i];
+    // }
 }
 
 
@@ -709,7 +717,7 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
         } break;
         case NRF_BLE_SCAN_EVT_NOT_FOUND:{
             ligh_data_parse();
-            
+            // scan_flag = true;
         }
         default:
         {
@@ -733,6 +741,9 @@ static ble_gap_scan_params_t const m_scan_param =
 };
 
 
+uint8_t MicroBitBLEManager::getHits(){
+    return hits;
+}
 
 
 bool MicroBitBLEManager::getFlag(){
@@ -1783,6 +1794,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
