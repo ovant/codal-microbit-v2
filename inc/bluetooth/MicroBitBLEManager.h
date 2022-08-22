@@ -65,27 +65,8 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
 
-struct LightricityData_t{
-    int vendorID = -2147483648;     //-2147483648 means uninitialized
-    int sensorID = -2147483648;
-    int beaconCounter = -2147483648;
-    int MACAdress = -2147483648;
-    int TXPower = -2147483648;
-    int temperature = -2147483648;    //degreees C
-    unsigned int pressure = 0;        //Pa
-    int humidity = -2147483648;       //%rh
-    unsigned int lux = 0;             //lux
-    unsigned int co2 = 0;      //lowecase co2 - units of ppm
-    struct {
-        int x = -2147483648;
-        int y = -2147483648;
-        int z = -2147483648;
-    } acceleration;
-    bool motion = false;
-    bool button = false;
-    unsigned int voltage = 0;   //mV
-    bool error = false;
-};
+class LightricityData;
+
 
 
 class MicroBitBLEManager;
@@ -192,9 +173,7 @@ class MicroBitBLEManager : public CodalComponent
     bool getFlag();
 
     void setFlag(bool x);
-
-    LightricityData_t getScanResults();
-
+    LightricityData getScanResults();
 
     void initializeScan();
 
@@ -364,7 +343,62 @@ class MicroBitBLEManager : public CodalComponent
 };
 
 
+//testing OOB
 
+
+class LightricityData{
+  public:
+    LightricityData(); //constructor
+    int getVendorID();
+    void setVendorID(int x);
+    int getSensorID();
+    void setSensorID(int x);
+    int getBeaconCounter();
+    void setBeaconCounter(int x);
+    int getMACAdress();
+    void setMACAdress(int x);
+    int getTXPower();
+    void setTXPower(int x);
+    int getTemp();
+    void setTemp(int x);
+    unsigned int getVoltage();
+    void setVoltage(unsigned int x);
+    unsigned int getPressure();
+    void setPressure(unsigned int x);
+    int getHumidity();
+    void setHumidity(int x);
+    unsigned int getLux();
+    void setLux(unsigned int x);
+    unsigned int getCO2();
+    void setCO2(unsigned int x);
+    bool getMotion();
+    void setMotion(bool x);
+    bool getButton();
+    void setButton(bool x);
+    bool getError();
+    void setError(bool x);
+
+  private:
+    int vendorID;
+    int sensorID;
+    int beaconCounter;
+    int MACAdress;
+    int TXPower;
+    int temperature;
+    unsigned int pressure;
+    int humidity;
+    unsigned int lux ;
+    unsigned int co2;
+    struct {
+        int x ;
+        int y ;
+        int z ;
+    } acceleration;
+    bool motion;
+    bool button;
+    unsigned int voltage ;
+    bool error ;
+};
 
 #endif
 

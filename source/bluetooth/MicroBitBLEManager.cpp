@@ -685,32 +685,17 @@ void MicroBitBLEManager::stopAdvertising()
 bool scan_flag = false;
 uint8_t hits = 0;
 
-LightricityData_t data;
+// LightricityData_t data;
+LightricityData data;
 
-LightricityData_t MicroBitBLEManager::getScanResults(){
+
+
+
+LightricityData MicroBitBLEManager::getScanResults(){
     return data;
 }
 
-//function to reset data to uninitialized state
-void clear_scan_results(){             
-    data.vendorID = -2147483648;     //-2147483648 means uninitialized
-    data.sensorID = -2147483648;
-    data.beaconCounter = -2147483648;
-    data.MACAdress = -2147483648;
-    data.TXPower = -2147483648;
-    data.temperature = -2147483648;
-    data.pressure = -2147483648;
-    data.humidity = -2147483648;
-    data.lux = -2147483648;
-    data.co2 = -2147483648;      //lowecase co2
-    data.acceleration.x = -2147483648;
-    data.acceleration.y = -2147483648;
-    data.acceleration.z = -2147483648;
-    data.motion = false;
-    data.button = false;
-    data.voltage = -2147483648;
-    data.error = false;
-}
+
 
 
 
@@ -722,8 +707,6 @@ static void ligh_data_parse(){
     if(!(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A))
         return; //if the data doesn't match lightricity company id, disregard data
 
-   
-    clear_scan_results();
 
     int len = m_scan.scan_buffer_data[3];
     for(int i=8;i<len+4;i++){
@@ -734,54 +717,54 @@ static void ligh_data_parse(){
         switch (type)
         {
         case 0: //vendor id
-            data.vendorID = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setVendorID(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
 
         case 1: //sensor id
-            data.sensorID = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setSensorID(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
         case 2: //beacon counter
-            data.beaconCounter = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setBeaconCounter(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
             
         case 3: //MAC adress
-            data.MACAdress = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setMACAdress(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
         
         case 4: //TX power
-            data.TXPower = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setTXPower(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
 
         case 5: //error
-            data.error = true; 
+            data.setError(true); 
             break;
 
         case 21: //temperature
-            data.temperature = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8);
+            data.setTemp(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8));
             i+=2;
             break;
 
         case 22: //Humidity
-            data.humidity = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8);
+            data.setHumidity(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8));
             i+=2;
             break;
 
         case 23: //Pressure
-            data.pressure = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setPressure(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;       
             break;
 
         case 24: //Lux
-            data.lux = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setLux(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
         case 25: //CO2
-            data.co2 = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setCO2(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
 
@@ -790,18 +773,19 @@ static void ligh_data_parse(){
             break;
 
         case 27: //Motion
-            data.motion = m_scan.scan_buffer_data[++i];
+            data.setMotion(m_scan.scan_buffer_data[++i]);
             break;
         case 28: //Button
-            data.button = m_scan.scan_buffer_data[++i];
+            data.setButton(m_scan.scan_buffer_data[++i]);
             break;
 
         case 29: //Battery voltage
-            data.voltage = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            data.setVoltage(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
             i+=l;
             break;
 
         default:
+            data.setError(true);
             break;
         }
     
@@ -1902,7 +1886,98 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 }
 
 
+LightricityData::LightricityData(){
+    vendorID = 0;
+    temperature = 0;
+    voltage = 0;
+}
 
+int LightricityData::getVendorID(){
+    return vendorID;
+}
+
+void LightricityData::setVendorID(int x){
+    vendorID = x;
+}
+
+int LightricityData::getSensorID(){
+    return sensorID;
+}
+void LightricityData::setSensorID(int x){
+    sensorID = x;
+}
+int LightricityData::getBeaconCounter(){
+    return beaconCounter;
+}
+void LightricityData::setBeaconCounter(int x){
+    beaconCounter = x;
+}
+int LightricityData::getMACAdress(){
+    return MACAdress;
+}
+void LightricityData::setMACAdress(int x){
+    MACAdress = x;
+}
+int LightricityData::getTXPower(){
+    return TXPower;
+}
+void LightricityData::setTXPower(int x){
+    TXPower = x;
+}
+int LightricityData::getTemp(){
+    return temperature;
+}
+void LightricityData::setTemp(int x){
+    temperature = x;
+}
+unsigned int LightricityData::getVoltage(){
+    return voltage;
+}
+void LightricityData::setVoltage(unsigned int x){
+    voltage = x;
+}
+unsigned int LightricityData::getPressure(){
+    return pressure;
+}
+void LightricityData::setPressure(unsigned int x){
+    pressure = x;
+}
+int LightricityData::getHumidity(){
+    return humidity;
+}
+void LightricityData::setHumidity(int x){
+    humidity = x;
+}
+unsigned int LightricityData::getLux(){
+    return lux;
+}
+void LightricityData::setLux(unsigned int x){
+    lux = x;
+}
+unsigned int LightricityData::getCO2(){
+    return co2;
+}
+void LightricityData::setCO2(unsigned int x){
+    co2 = x;
+}
+bool LightricityData::getMotion(){
+    return motion;
+}
+void LightricityData::setMotion(bool x){
+    motion = x;
+}
+bool LightricityData::getButton(){
+    return button;
+}
+void LightricityData::setButton(bool x){
+    button = x;
+}
+bool LightricityData::getError(){
+    return error;
+}
+void LightricityData::setError(bool x){
+    error = x;
+}
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
