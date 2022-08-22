@@ -685,18 +685,130 @@ void MicroBitBLEManager::stopAdvertising()
 bool scan_flag = false;
 uint8_t hits = 0;
 
+LightricityData_t data;
+
+LightricityData_t MicroBitBLEManager::getScanResults(){
+    return data;
+}
+
+//function to reset data to uninitialized state
+void clear_scan_results(){             
+    data.vendorID = -2147483648;     //-2147483648 means uninitialized
+    data.sensorID = -2147483648;
+    data.beaconCounter = -2147483648;
+    data.MACAdress = -2147483648;
+    data.TXPower = -2147483648;
+    data.temperature = -2147483648;
+    data.pressure = -2147483648;
+    data.humidity = -2147483648;
+    data.lux = -2147483648;
+    data.co2 = -2147483648;      //lowecase co2
+    data.acceleration.x = -2147483648;
+    data.acceleration.y = -2147483648;
+    data.acceleration.z = -2147483648;
+    data.motion = false;
+    data.button = false;
+    data.voltage = -2147483648;
+    data.error = false;
+}
+
+
 
 static void ligh_data_parse(){
     //check lightricity company id
-    if(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A)
-        scan_flag = true;
+
 
     
+    if(!(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A))
+        return; //if the data doesn't match lightricity company id, disregard data
 
-    hits++;
-    // for(uint8_t i=0;i<=31;i++){
-    //     uint8_t d = m_scan.scan_buffer_data[i];
-    // }
+   
+    clear_scan_results();
+
+    int len = m_scan.scan_buffer_data[3];
+    for(int i=8;i<len+4;i++){
+        int x = m_scan.scan_buffer_data[i];
+
+        int l = x & 0x3;        //last 2 bits are data length
+        int type = x >> 2;      //first 6 bits are data type
+        switch (type)
+        {
+        case 0: //vendor id
+            data.vendorID = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+
+        case 1: //sensor id
+            data.sensorID = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+        case 2: //beacon counter
+            data.beaconCounter = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+            
+        case 3: //MAC adress
+            data.MACAdress = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+        
+        case 4: //TX power
+            data.TXPower = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+
+        case 5: //error
+            data.error = true; 
+            break;
+
+        case 21: //temperature
+            data.temperature = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8);
+            i+=2;
+            break;
+
+        case 22: //Humidity
+            data.humidity = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8);
+            i+=2;
+            break;
+
+        case 23: //Pressure
+            data.pressure = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;       
+            break;
+
+        case 24: //Lux
+            data.lux = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+        case 25: //CO2
+            data.co2 = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+
+        case 26: //Acceleration
+
+            break;
+
+        case 27: //Motion
+            data.motion = m_scan.scan_buffer_data[++i];
+            break;
+        case 28: //Button
+            data.button = m_scan.scan_buffer_data[++i];
+            break;
+
+        case 29: //Battery voltage
+            data.voltage = m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0);
+            i+=l;
+            break;
+
+        default:
+            break;
+        }
+    
+    }
+    
+    scan_flag = true;
+    
 }
 
 
@@ -717,7 +829,6 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
         } break;
         case NRF_BLE_SCAN_EVT_NOT_FOUND:{
             ligh_data_parse();
-            // scan_flag = true;
         }
         default:
         {
@@ -740,10 +851,6 @@ static ble_gap_scan_params_t const m_scan_param =
     .timeout       = SCAN_DURATION_WITELIST,
 };
 
-
-uint8_t MicroBitBLEManager::getHits(){
-    return hits;
-}
 
 
 bool MicroBitBLEManager::getFlag(){
@@ -778,6 +885,8 @@ static void scan_init(void)
     
 }
 
+
+//TODO  remove initializeScan and put scan_init in startScanning to simplify use
 void MicroBitBLEManager::initializeScan(){
     scan_init();
 }
@@ -1793,7 +1902,11 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 }
 
 
+
+
+
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 

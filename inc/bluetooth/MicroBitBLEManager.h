@@ -65,6 +65,29 @@ DEALINGS IN THE SOFTWARE.
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
 
+struct LightricityData_t{
+    int vendorID = -2147483648;     //-2147483648 means uninitialized
+    int sensorID = -2147483648;
+    int beaconCounter = -2147483648;
+    int MACAdress = -2147483648;
+    int TXPower = -2147483648;
+    int temperature = -2147483648;    //degreees C
+    unsigned int pressure = 0;        //Pa
+    int humidity = -2147483648;       //%rh
+    unsigned int lux = 0;             //lux
+    unsigned int co2 = 0;      //lowecase co2 - units of ppm
+    struct {
+        int x = -2147483648;
+        int y = -2147483648;
+        int z = -2147483648;
+    } acceleration;
+    bool motion = false;
+    bool button = false;
+    unsigned int voltage = 0;   //mV
+    bool error = false;
+};
+
+
 class MicroBitBLEManager;
 typedef MicroBitBLEManager BLEDevice;
 
@@ -169,6 +192,8 @@ class MicroBitBLEManager : public CodalComponent
     bool getFlag();
 
     void setFlag(bool x);
+
+    LightricityData_t getScanResults();
 
 
     void initializeScan();
@@ -338,9 +363,13 @@ class MicroBitBLEManager : public CodalComponent
     bool advertiseOnDisconnect = true;
 };
 
+
+
+
 #endif
 
 #endif
+
 
 
 
