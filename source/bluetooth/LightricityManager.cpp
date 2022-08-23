@@ -1,6 +1,7 @@
 #include "LightricityManager.h"
 #include "ManagedString.h"
 
+
 LightricityData::LightricityData()
 {
     vendorID = 0;
@@ -41,6 +42,7 @@ void LightricityData::clearData(){
     voltage = 0;
     error = false;
 }
+
 
 codal::ManagedString LightricityData::getTempString(){
     

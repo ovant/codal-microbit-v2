@@ -1,5 +1,6 @@
 #include "ManagedString.h"
 
+
 class LightricityData{
 
   private:
