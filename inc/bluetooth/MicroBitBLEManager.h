@@ -39,6 +39,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDisplay.h"
 #include "ExternalEvents.h"
 #include "MicroBitButton.h"
+#include "LightricityManager.h"
 
 #include "nrf_ble_scan.h"
 
@@ -64,8 +65,6 @@ DEALINGS IN THE SOFTWARE.
 // These modes can be representeded using these #defines
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
-
-class LightricityData;
 
 
 
@@ -346,64 +345,10 @@ class MicroBitBLEManager : public CodalComponent
 //testing OOB
 
 
-class LightricityData{
-  public:
-    LightricityData(); //constructor
-    int getVendorID();
-    void setVendorID(int x);
-    int getSensorID();
-    void setSensorID(int x);
-    int getBeaconCounter();
-    void setBeaconCounter(int x);
-    int getMACAdress();
-    void setMACAdress(int x);
-    int getTXPower();
-    void setTXPower(int x);
-    int getTemp();
-    void setTemp(int x);
-    unsigned int getVoltage();
-    void setVoltage(unsigned int x);
-    unsigned int getPressure();
-    void setPressure(unsigned int x);
-    int getHumidity();
-    void setHumidity(int x);
-    unsigned int getLux();
-    void setLux(unsigned int x);
-    unsigned int getCO2();
-    void setCO2(unsigned int x);
-    bool getMotion();
-    void setMotion(bool x);
-    bool getButton();
-    void setButton(bool x);
-    bool getError();
-    void setError(bool x);
-
-  private:
-    int vendorID;
-    int sensorID;
-    int beaconCounter;
-    int MACAdress;
-    int TXPower;
-    int temperature;
-    unsigned int pressure;
-    int humidity;
-    unsigned int lux ;
-    unsigned int co2;
-    struct {
-        int x ;
-        int y ;
-        int z ;
-    } acceleration;
-    bool motion;
-    bool button;
-    unsigned int voltage ;
-    bool error ;
-};
 
 #endif
 
 #endif
-
 
 
 

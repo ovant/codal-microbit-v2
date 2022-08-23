@@ -75,6 +75,7 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_log_backend_dmesg.h"
 
 
+
 #define MICROBIT_PAIRING_FADE_SPEED 4
 
 //
@@ -1886,102 +1887,9 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 }
 
 
-LightricityData::LightricityData(){
-    vendorID = 0;
-    temperature = 0;
-    voltage = 0;
-}
-
-int LightricityData::getVendorID(){
-    return vendorID;
-}
-
-void LightricityData::setVendorID(int x){
-    vendorID = x;
-}
-
-int LightricityData::getSensorID(){
-    return sensorID;
-}
-void LightricityData::setSensorID(int x){
-    sensorID = x;
-}
-int LightricityData::getBeaconCounter(){
-    return beaconCounter;
-}
-void LightricityData::setBeaconCounter(int x){
-    beaconCounter = x;
-}
-int LightricityData::getMACAdress(){
-    return MACAdress;
-}
-void LightricityData::setMACAdress(int x){
-    MACAdress = x;
-}
-int LightricityData::getTXPower(){
-    return TXPower;
-}
-void LightricityData::setTXPower(int x){
-    TXPower = x;
-}
-int LightricityData::getTemp(){
-    return temperature;
-}
-void LightricityData::setTemp(int x){
-    temperature = x;
-}
-unsigned int LightricityData::getVoltage(){
-    return voltage;
-}
-void LightricityData::setVoltage(unsigned int x){
-    voltage = x;
-}
-unsigned int LightricityData::getPressure(){
-    return pressure;
-}
-void LightricityData::setPressure(unsigned int x){
-    pressure = x;
-}
-int LightricityData::getHumidity(){
-    return humidity;
-}
-void LightricityData::setHumidity(int x){
-    humidity = x;
-}
-unsigned int LightricityData::getLux(){
-    return lux;
-}
-void LightricityData::setLux(unsigned int x){
-    lux = x;
-}
-unsigned int LightricityData::getCO2(){
-    return co2;
-}
-void LightricityData::setCO2(unsigned int x){
-    co2 = x;
-}
-bool LightricityData::getMotion(){
-    return motion;
-}
-void LightricityData::setMotion(bool x){
-    motion = x;
-}
-bool LightricityData::getButton(){
-    return button;
-}
-void LightricityData::setButton(bool x){
-    button = x;
-}
-bool LightricityData::getError(){
-    return error;
-}
-void LightricityData::setError(bool x){
-    error = x;
-}
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
-
 
 
 
