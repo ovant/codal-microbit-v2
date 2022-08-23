@@ -39,6 +39,7 @@ DEALINGS IN THE SOFTWARE.
 #include "MicroBitDisplay.h"
 #include "ExternalEvents.h"
 #include "MicroBitButton.h"
+#include "LightricityManager.h"
 
 #include "nrf_ble_scan.h"
 
@@ -64,6 +65,8 @@ DEALINGS IN THE SOFTWARE.
 // These modes can be representeded using these #defines
 #define MICROBIT_MODE_PAIRING                   0
 #define MICROBIT_MODE_APPLICATION               1
+
+
 
 class MicroBitBLEManager;
 typedef MicroBitBLEManager BLEDevice;
@@ -169,7 +172,7 @@ class MicroBitBLEManager : public CodalComponent
     bool getFlag();
 
     void setFlag(bool x);
-
+    LightricityData getScanResults();
 
     void initializeScan();
 
@@ -337,6 +340,11 @@ class MicroBitBLEManager : public CodalComponent
 
     bool advertiseOnDisconnect = true;
 };
+
+
+//testing OOB
+
+
 
 #endif
 

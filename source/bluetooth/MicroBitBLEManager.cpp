@@ -75,6 +75,7 @@ DEALINGS IN THE SOFTWARE.
 #include "nrf_log_backend_dmesg.h"
 
 
+
 #define MICROBIT_PAIRING_FADE_SPEED 4
 
 //
@@ -685,18 +686,114 @@ void MicroBitBLEManager::stopAdvertising()
 bool scan_flag = false;
 uint8_t hits = 0;
 
+// LightricityData_t data;
+LightricityData data;
+
+
+
+
+LightricityData MicroBitBLEManager::getScanResults(){
+    return data;
+}
+
+
+
+
 
 static void ligh_data_parse(){
     //check lightricity company id
-    if(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A)
-        scan_flag = true;
+
 
     
+    if(!(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A))
+        return; //if the data doesn't match lightricity company id, disregard data
 
-    hits++;
-    // for(uint8_t i=0;i<=31;i++){
-    //     uint8_t d = m_scan.scan_buffer_data[i];
-    // }
+
+    int len = m_scan.scan_buffer_data[3];
+    for(int i=8;i<len+4;i++){
+        int x = m_scan.scan_buffer_data[i];
+
+        int l = x >> 6;         //last 2 bits are data length
+        int type = x & 0x3F;      //first 6 bits are data type
+        switch (type)
+        {
+        case 0: //vendor id
+            data.setVendorID(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+
+        case 1: //sensor id
+            data.setSensorID(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+        case 2: //beacon counter
+            data.setBeaconCounter(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+            
+        case 3: //MAC adress
+            data.setMACAdress(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+        
+        case 4: //TX power
+            data.setTXPower(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+
+        case 5: //error
+            data.setError(true); 
+            break;
+
+        case 21: //temperature
+            data.setTemp(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8));
+            i+=2;
+            break;
+
+        case 22: //Humidity
+            data.setHumidity(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8));
+            i+=2;
+            break;
+
+        case 23: //Pressure
+            data.setPressure(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;       
+            break;
+
+        case 24: //Lux
+            data.setLux(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+        case 25: //CO2
+            data.setCO2(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+
+        case 26: //Acceleration
+
+            break;
+
+        case 27: //Motion
+            data.setMotion(m_scan.scan_buffer_data[++i]);
+            break;
+        case 28: //Button
+            data.setButton(m_scan.scan_buffer_data[++i]);
+            break;
+
+        case 29: //Battery voltage
+            data.setVoltage(m_scan.scan_buffer_data[i+1] + (m_scan.scan_buffer_data[i+2] << 8) * (l-1 > 0) + (m_scan.scan_buffer_data[i+3] << 16) * (l-2 > 0) + (m_scan.scan_buffer_data[i+4] << 24) * (l-3 > 0));
+            i+=l;
+            break;
+
+        default:
+            data.setError(true);
+            break;
+        }
+    
+    }
+    
+    scan_flag = true;
+    
 }
 
 
@@ -717,7 +814,6 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
         } break;
         case NRF_BLE_SCAN_EVT_NOT_FOUND:{
             ligh_data_parse();
-            // scan_flag = true;
         }
         default:
         {
@@ -740,10 +836,6 @@ static ble_gap_scan_params_t const m_scan_param =
     .timeout       = SCAN_DURATION_WITELIST,
 };
 
-
-uint8_t MicroBitBLEManager::getHits(){
-    return hits;
-}
 
 
 bool MicroBitBLEManager::getFlag(){
@@ -778,6 +870,8 @@ static void scan_init(void)
     
 }
 
+
+//TODO  remove initializeScan and put scan_init in startScanning to simplify use
 void MicroBitBLEManager::initializeScan(){
     scan_init();
 }
@@ -1791,6 +1885,8 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
     target_panic( panic);
 }
+
+
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
