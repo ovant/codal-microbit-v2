@@ -713,10 +713,8 @@ static void ligh_data_parse(){
     for(int i=8;i<len+4;i++){
         int x = m_scan.scan_buffer_data[i];
 
-
-        int l = x >> 6;         //last 2 bits are data length
+        int l = (x >> 6) + 1;         //last 2 bits are data length
         int type = x & 0x3F;      //first 6 bits are data type
-
         switch (type)
         {
         case 0: //vendor id
@@ -1892,6 +1890,7 @@ void app_error_fault_handler(uint32_t id, uint32_t pc, uint32_t info)
 
 
 #endif // CONFIG_ENABLED(DEVICE_BLE)
+
 
 
 
