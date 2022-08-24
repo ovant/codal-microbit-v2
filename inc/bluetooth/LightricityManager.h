@@ -1,6 +1,5 @@
 #include "ManagedString.h"
 
-
 class LightricityData{
 
   private:
@@ -9,19 +8,19 @@ class LightricityData{
     int beaconCounter;
     int MACAdress;
     int TXPower;
-    int temperature;
-    unsigned int pressure;
-    int humidity;
-    unsigned int lux ;
-    unsigned int co2;
+    int temperature;            //degrees C, devide by 100 to get real value
+    unsigned int pressure;      //Pa
+    int humidity;               //%rh, divide by 100 to get real value
+    unsigned int lux ;          //lux
+    unsigned int co2;           //ppm
     struct {
         int x ;
         int y ;
         int z ;
-    } acceleration;
+    } acceleration;             //mg
     bool motion;
     bool button;
-    unsigned int voltage ;
+    unsigned int voltage ;      //mV
     bool error ;
 
 
@@ -31,6 +30,12 @@ class LightricityData{
     void clearData();
 
     codal::ManagedString getTempString();
+    codal::ManagedString getHumidityString();
+    codal::ManagedString getVoltageString();
+    codal::ManagedString getPressureString();
+    codal::ManagedString getLuxString();
+    codal::ManagedString getCO2String();
+    //all others can be displayed on the microbit directly with the get fuction without explicit string conversion
 
 
     //all getters and setters
@@ -62,6 +67,21 @@ class LightricityData{
     void setButton(bool x){ button = x;}
     bool getError(){    return error;}
     void setError(bool x) { error = x;}
-
+    int getAccX(){ return acceleration.x;}
+    int getAccY(){ return acceleration.y;}
+    int getAccZ(){ return acceleration.z;}
+    //sets x,y,z. pass NULL if they remain unchanged. to enable setting them to 0, pass reset as true
+    void setAcc(int x, int y, int z, bool reset = false){ 
+      if(reset){
+        acceleration.x = x;
+        acceleration.y = y;
+        acceleration.z = z;
+      }
+      else{
+        if(x) acceleration.x = x;
+        if(y) acceleration.y = y;
+        if(z) acceleration.z = z;
+      }
+    }
 
 };
