@@ -770,7 +770,8 @@ static void ligh_data_parse(){
             break;
 
         case 26: //Acceleration
-
+            data.setAcc(m_scan.scan_buffer_data[i+1]+ (m_scan.scan_buffer_data[i+2] << 8), m_scan.scan_buffer_data[i+3]+ (m_scan.scan_buffer_data[i+4] << 8), m_scan.scan_buffer_data[i+5]+ (m_scan.scan_buffer_data[i+6] << 8), true);
+            i+=6;
             break;
 
         case 27: //Motion
@@ -871,16 +872,10 @@ static void scan_init(void)
 }
 
 
-//TODO  remove initializeScan and put scan_init in startScanning to simplify use
-void MicroBitBLEManager::initializeScan(){
-    scan_init();
-}
-
-
 
 void MicroBitBLEManager::startScanning()
 {
-
+    scan_init();
     nrf_ble_scan_start(&m_scan);
 }
 

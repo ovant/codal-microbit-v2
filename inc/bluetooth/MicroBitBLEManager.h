@@ -174,8 +174,6 @@ class MicroBitBLEManager : public CodalComponent
     void setFlag(bool x);
     LightricityData getScanResults();
 
-    void initializeScan();
-
 
     /**
      * Determines the number of devices currently bonded with this micro:bit.
@@ -349,6 +347,7 @@ class MicroBitBLEManager : public CodalComponent
 #endif
 
 #endif
+
 
 
 
