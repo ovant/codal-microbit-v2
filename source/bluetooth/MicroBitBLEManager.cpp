@@ -850,24 +850,7 @@ void MicroBitBLEManager::setFlag(bool x){
 static void scan_init(void)
 {
 
-    ble_gap_scan_params_t m_scan_param;
-    m_scan_param.active = 1;
-    m_scan_param.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
-    m_scan_param.scan_phys = BLE_GAP_PHY_1MBPS;
-    m_scan_param.interval = NRF_BLE_SCAN_SCAN_INTERVAL;
-    m_scan_param.window = NRF_BLE_SCAN_SCAN_WINDOW;
-    m_scan_param.timeout = SCAN_DURATION_WITELIST;
-
-    nrf_ble_scan_init_t init_scan;
-
-    memset(&init_scan, 0, sizeof(init_scan));
-
-    init_scan.p_scan_param     = &m_scan_param;
-    init_scan.connect_if_match = false;
-    init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
-
-
-    nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
+    nrf_ble_scan_init(&m_scan, NULL, scan_evt_handler);
     
 }
 
