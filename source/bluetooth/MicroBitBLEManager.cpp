@@ -832,12 +832,12 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 /**< Scan parameters requested for scanning and connection. */
 static ble_gap_scan_params_t const m_scan_param =
 {
-    .active        = 0x01,
-    .filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL,
-    .scan_phys     = BLE_GAP_PHY_1MBPS,
-    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
-    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
-    .timeout       = SCAN_DURATION_WITELIST,
+    active        : 0x01,
+    filter_policy : BLE_GAP_SCAN_FP_ACCEPT_ALL,
+    scan_phys     : BLE_GAP_PHY_1MBPS,
+    interval      : NRF_BLE_SCAN_SCAN_INTERVAL,
+    window        : NRF_BLE_SCAN_SCAN_WINDOW,
+    timeout       : SCAN_DURATION_WITELIST,
 };
 
 
