@@ -10,7 +10,7 @@ class LightricityData{
     int TXPower;
     int temperature;            //degrees C, devide by 100 to get real value
     unsigned int pressure;      //Pa
-    int humidity;               //%rh, divide by 100 to get real value
+    unsigned int humidity;      //%rh, divide by 100 to get real value
     unsigned int lux ;          //lux
     unsigned int co2;           //ppm
     struct {
@@ -83,5 +83,6 @@ class LightricityData{
         if(z) acceleration.z = z;
       }
     }
+
 
 };

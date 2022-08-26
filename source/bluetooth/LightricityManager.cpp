@@ -48,9 +48,7 @@ codal::ManagedString LightricityData::getTempString(){
     return codal::ManagedString(temperature/100) + codal::ManagedString('.') + codal::ManagedString(temperature%100);
 }
 
-codal::ManagedString LightricityData::getHumidityString(){
-    return codal::ManagedString(humidity/100) + codal::ManagedString('.') + codal::ManagedString(humidity%100);
-}
+
 
 
 //helper function to turn unsigned int to char array
@@ -72,26 +70,31 @@ void uitoa(unsigned int n, char *s)
 
 }
 
+codal::ManagedString makeStringFromU(unsigned int x){
+    char str[12];
+    uitoa(x,str);
+    return codal::ManagedString(str);
+}
+
+codal::ManagedString LightricityData::getHumidityString(){
+    
+    return makeStringFromU(humidity/100) + codal::ManagedString('.') + makeStringFromU(humidity%100);
+}
+
 
 codal::ManagedString LightricityData::getVoltageString(){
-    char str[12];
-    uitoa(voltage, str);
-    return codal::ManagedString(str);
+    return makeStringFromU(voltage);
 }
 
 codal::ManagedString LightricityData::getPressureString(){
-    char str[12];
-    uitoa(pressure, str);
-    return codal::ManagedString(str);
+    return makeStringFromU(pressure);
 
 }
 codal::ManagedString LightricityData::getLuxString(){
-    char str[12];
-    uitoa(lux, str);
-    return codal::ManagedString(str);
+    return makeStringFromU(lux);
 }
 codal::ManagedString LightricityData::getCO2String(){
-    char str[12];
-    uitoa(co2, str);
-    return codal::ManagedString(str);
+    return makeStringFromU(co2);
 }
+
+

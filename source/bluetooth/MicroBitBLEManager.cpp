@@ -708,6 +708,8 @@ static void ligh_data_parse(){
     if(!(m_scan.scan_buffer_data[4] == 0xFF && m_scan.scan_buffer_data[5] == 0x96 && m_scan.scan_buffer_data[6] == 0x0A))
         return; //if the data doesn't match lightricity company id, disregard data
 
+    data.clearData();
+
 
     int len = m_scan.scan_buffer_data[3];
     for(int i=8;i<len+4;i++){
@@ -796,6 +798,7 @@ static void ligh_data_parse(){
     scan_flag = true;
     
 }
+
 
 
 static void scan_evt_handler(scan_evt_t const * p_scan_evt)
